@@ -10,7 +10,9 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.List;
 import java.util.Optional;
 
 @Controller
@@ -38,7 +40,7 @@ public class ArticleController {
         Article saved = articleRepository.save(article);
         log.info(saved.toString());
 
-        return "";
+        return "redirect:/articles/"+saved.getId();//리다이렉트
     }
 
     @GetMapping("/articles/{id}")
@@ -55,5 +57,63 @@ public class ArticleController {
 
         // 3. 보여줄 페이지를 설정한다.
         return "articles/show";
+    }
+
+    @GetMapping("/articles")
+    public String index(Model model){
+
+        //1. 모든 Article을 가져온다
+        //List<Article> articleEntityList = (List<Article>) articleRepository.findAll(); // 타입 케스팅
+        //Iterable<Article> articleEntityList = articleRepository.findAll(); // findAll()의 반환값인 Iterable<T>로 선언
+        List<Article> articleEntityList = articleRepository.findAll(); // findAll()을 오버라이드
+
+        //2. 가져온 Article묶음을 뷰로 전달하기
+        model.addAttribute("articleList",articleEntityList);
+
+        //3. 뷰페이지 설정
+        return "articles/index";
+    }
+
+    @GetMapping("/articles/{id}/edit")
+    public String edit(@PathVariable  Long id, Model model){
+        //수정할 데이터 가져오깅
+        Article articleEntity = articleRepository.findById(id).orElse(null);
+
+        //모델에 데이터 등록
+        model.addAttribute("article",articleEntity);
+        //뷰 페이지 설정
+        return "articles/edit";
+    }
+    @PostMapping("/articles/update")
+    public String update(ArticleForm form){
+        log.info(form.toString());
+
+        //1. dto 를 엔티티로 변환
+        Article  articleEntity = form.toEntity();
+        log.info(articleEntity.toString());
+
+        //2. 엔티티를 디비에 저장
+        // 2-1 기존데이터 가져오깅
+        //Optional<Article> target = articleRepository.findById(articleEntity.getId());
+        Article target = articleRepository.findById(articleEntity.getId()).orElse(null);
+
+        //2-2 업뎃
+        if(target!=null){
+            articleRepository.save(articleEntity); // 엔디티 업뎃
+        }
+        //3. 리다이렉트
+        return "redirect:/articles/"+articleEntity.getId();
+    }
+
+    @GetMapping("/articles/{id}/delete")
+    public String delete(@PathVariable Long id, RedirectAttributes rttr){
+        Article target = articleRepository.findById(id).orElse(null);
+
+        if(target != null){
+            articleRepository.delete(target);
+            rttr.addFlashAttribute("msg","Delete Complete!");
+        }
+
+        return "redirect:/articles";
     }
 }
