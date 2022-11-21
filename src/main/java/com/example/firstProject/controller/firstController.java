@@ -4,7 +4,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
-@Controller
+@Controller // 일반컨트롤러는 HTML 소스를 반환?
 public class firstController {
 
     @GetMapping("/hi")
